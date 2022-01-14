@@ -8,8 +8,8 @@ public class Jogo {
     private Humano jogadorHumano;
     private Computador jogadorComputador;
     private int tamanhoDoTabuleiro = 10;
-    private Tabuleiro humano = new Tabuleiro();
-    private Tabuleiro computador = new Tabuleiro();
+    private Tabuleiro tabuleiroDoHumano = new Tabuleiro();
+    private Tabuleiro tabuleiroDoComputador = new Tabuleiro();
     private Tabuleiro ataquesDoHumanoNoComputador = new Tabuleiro();
     private Tabuleiro ataquesDoComputadorNoHumano = new Tabuleiro();
     private MostraTabuleiro mostraTabuleiro = new MostraTabuleiro(this.tamanhoDoTabuleiro, this.tamanhoDoTabuleiro);
@@ -19,10 +19,9 @@ public class Jogo {
     public Jogo(Scanner sc) {
         jogadorHumano = new Humano();
         jogadorComputador = new Computador();
-        this.mostraTabuleiro(humano);
         this.setNavios(sc);
-        this.mostraTabuleiro(humano);
-        this.setNavioAutomatico(computador, jogadorComputador);
+        this.setNavioAutomatico(tabuleiroDoComputador, jogadorComputador);
+        mostraTabuleiro.mostra(tabuleiroDoHumano.getTabuleiro());
         this.jogar(sc);
     }
 
@@ -34,7 +33,7 @@ public class Jogo {
                 this.setNavioManual(sc);
                 break;
             } else if (entrada.toUpperCase(Locale.ROOT).equals("N")) {
-                this.setNavioAutomatico(humano, jogadorHumano);
+                this.setNavioAutomatico(tabuleiroDoHumano, jogadorHumano);
                 break;
             } else {
                 System.out.println("Somente S ou N.");
@@ -48,8 +47,8 @@ public class Jogo {
             System.out.println(String.format("informe os dados do Navio: %d, ", idx));
             x = jogadorHumano.setLinha(sc);
             y = jogadorHumano.setColuna(sc);
-            if (humano.ehLugarValido(x, y) == true) {
-                humano.setNavio(x, y);
+            if (tabuleiroDoHumano.ehLugarValido(x, y) == true) {
+                tabuleiroDoHumano.setNavio(x, y);
             }
         }
     }
@@ -69,25 +68,20 @@ public class Jogo {
         while (true) {
             turno = "humano";
             this.humanoJoga(sc);
-            mostraTabuleiro(humano, ataquesDoHumanoNoComputador);
+            mostraTabuleiro.mostra(tabuleiroDoHumano.getTabuleiro());
             if (verificaSeVenceu() == true) {
                 break;
             }
 
             turno = "computador";
             this.computadorJoga();
-            mostraTabuleiro(humano, ataquesDoHumanoNoComputador);
+            mostraTabuleiro.mostra(tabuleiroDoHumano.getTabuleiro());
             if (verificaSeVenceu() == true){
                 break;
             }
         }
 
         this.declaraVencedor(turno);
-    }
-
-    public void mostraTabuleiro(Tabuleiro board1) {
-        String[][] array1 = board1.getTabuleiro();
-        mostraTabuleiro.mostra(array1);
     }
 
     public void humanoJoga(Scanner sc) {
@@ -97,19 +91,19 @@ public class Jogo {
             while (movimentoValido == false) {
                 x = jogadorHumano.setAtaqueNaLina(sc);
                 y = jogadorHumano.setAtaqueNaColuna(sc);
-                if (computador.jogadaEhValida(x, y) == true) {
-                    if (computador.getEstaAcertado(x, y) == true) {
+                if (tabuleiroDoComputador.jogadaEhValida(x, y) == true) {
+                    if (tabuleiroDoComputador.getEstaAcertado(x, y) == true) {
                         printEEspera("Voce acertou o navio!", 1500);
                         this.navioComputador -= 1;
                         ataquesDoHumanoNoComputador.setTiroCerteiro(x, y);
-                        humano.setTiroCerteiro(x, y);
-                        computador.setTiroCerteiro(x, y);
+                        tabuleiroDoHumano.setTiroCerteiro(x, y);
+                        tabuleiroDoComputador.setTiroCerteiro(x, y);
                     }
                     else {
                         printEEspera("Você não acertou.", 1500);
                         ataquesDoHumanoNoComputador.setTiroNaAgua(x, y);
-                        humano.setTiroNaAgua(x, y);
-                        computador.setTiroNaAgua(x, y);
+                        tabuleiroDoHumano.setTiroNaAgua(x, y);
+                        tabuleiroDoComputador.setTiroNaAgua(x, y);
                     }
 
                     movimentoValido = true;
@@ -119,12 +113,6 @@ public class Jogo {
         catch (InterruptedException e){
             System.out.println(e.getMessage());
         }
-    }
-
-    public void mostraTabuleiro(Tabuleiro board1, Tabuleiro board2) {
-        String[][] array1 = board1.getTabuleiro();
-        String[][] array2 = board2.getTabuleiro();
-        mostraTabuleiro.mostra(array1, array2);
     }
 
     public boolean verificaSeVenceu(){
@@ -144,17 +132,15 @@ public class Jogo {
                 movimento = jogadorComputador.geraAtaque();
                 x = movimento[0];
                 y = movimento[1];
-                if (humano.jogadaEhValida(x, y) == true) {
-                    if (humano.getEstaAcertado(x, y) == true) {
+                if (tabuleiroDoHumano.jogadaEhValida(x, y) == true) {
+                    if (tabuleiroDoHumano.getEstaAcertado(x, y) == true) {
                         String s = String.format("O computador acertou seu navio na posicao %d e %d.\n", x, y);
                         printEEspera(s, 2000);
                         this.navioHumano -= 1;
                         ataquesDoComputadorNoHumano.setTiroCerteiro(x, y);
-                        humano.setTiroCerteiro(x, y);
                     }
                     else {
                         printEEspera("O computador perdeu o tiro!", 2000);
-                        humano.setTiroNaAgua(x, y);
                         ataquesDoComputadorNoHumano.setTiroNaAgua(x, y);
                     }
 
@@ -169,13 +155,15 @@ public class Jogo {
     }
 
     public void declaraVencedor(String lastTurn) {
+        mostraTabuleiro.mostra(tabuleiroDoHumano.getTabuleiro(), tabuleiroDoComputador.getTabuleiro());
         try {
-            if (lastTurn.equals("Humano!!!")) {
+            if (lastTurn.equals("humano")) {
+                printEEspera("Humano!", 2000);
                 jogadorHumano.venceu();
                 return;
             }
 
-            printEEspera("Computador!", 2000);
+            printEEspera("Humano!", 2000);
             jogadorComputador.venceu();
         }
         catch(InterruptedException e) {
